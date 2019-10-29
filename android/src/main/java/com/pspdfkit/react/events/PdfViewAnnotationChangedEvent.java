@@ -52,19 +52,32 @@ public class PdfViewAnnotationChangedEvent extends Event<PdfViewAnnotationChange
             map.put("change", eventType);
 
             Map<String, Object> annotationMap;
+            Map<String, Object> parentMap;
+            Annotation parentAnnotation;
             if (EVENT_TYPE_REMOVED.equalsIgnoreCase(eventType)) {
                 // For removed annotation we can't get the instant json so manually create something.
                 annotationMap = new HashMap<>();
                 annotationMap.put("name", annotation.getName());
+                annotationMap.put("uuid", annotation.getName());
                 annotationMap.put("creatorName", annotation.getCreator());
             } else {
                 JSONObject instantJson = new JSONObject(annotation.toInstantJson());
                 annotationMap = JsonUtilities.jsonObjectToMap(instantJson);
+                annotationMap.put("uuid", annotation.getName());
             }
 
             List<Map<String, Object>> annotations = new ArrayList<>();
+            List<Map<String, Object>> onReplyAnnotations = new ArrayList<>();
             annotations.add(annotationMap);
             map.put("annotations", annotations);
+            parentAnnotation = annotation.getInReplyTo();
+            if (parentAnnotation != null) {
+                JSONObject parentJson = new JSONObject(parentAnnotation.toInstantJson());
+                parentMap = JsonUtilities.jsonObjectToMap(parentJson);
+                parentMap.put("uuid", parentAnnotation.getName());
+                onReplyAnnotations.add(parentMap);
+                map.put("onReplyAnnotations", onReplyAnnotations);
+            }
 
             WritableMap eventData = Arguments.makeNativeMap(map);
             rctEventEmitter.receiveEvent(getViewTag(), getEventName(), eventData);
