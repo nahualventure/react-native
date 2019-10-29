@@ -43,6 +43,7 @@ RCT_CUSTOM_VIEW_PROPERTY(configuration, PSPDFConfiguration, RCTPSPDFKitView) {
       [builder setupFromJSON:json];
     }];
   }
+  [view.pdfController.navigationItem setRightBarButtonItems:@[view.pdfController.thumbnailsButtonItem, view.pdfController.outlineButtonItem, view.pdfController.searchButtonItem, view.pdfController.annotationButtonItem] animated:NO];
 }
 
 RCT_CUSTOM_VIEW_PROPERTY(annotationAuthorName, NSString, RCTPSPDFKitView) {
