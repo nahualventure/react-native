@@ -12,6 +12,7 @@
 #import "RCTConvert+PSPDFAnnotation.h"
 #import "RCTConvert+PSPDFViewMode.h"
 #import "RCTConvert+UIBarButtonItem.h"
+#import "MyFeaturesSource.m"
 
 #define VALIDATE_DOCUMENT(document, ...) { if (!document.isValid) { NSLog(@"Document is invalid."); return __VA_ARGS__; }}
 
@@ -119,6 +120,12 @@
   return [self.pdfController.annotationToolbarController hideToolbarAnimated:YES];
 }
 
+- (void)disableReplies {
+  printf("the message");
+  PSPDFDocument *document = self.pdfController.document;
+//  [document.features addSources:@[[[MyFeaturesSource alloc] init]]];
+}
+
 - (BOOL)saveCurrentDocument {
   return [self.pdfController.document saveWithOptions:nil error:NULL];
 }
@@ -143,6 +150,7 @@
   if (self.onAnnotationTapped) {
     NSData *annotationData = [annotation generateInstantJSONWithError:NULL];
     NSDictionary *annotationDictionary = [NSJSONSerialization JSONObjectWithData:annotationData options:kNilOptions error:NULL];
+
     self.onAnnotationTapped(annotationDictionary);
   }
   return self.disableDefaultActionForTappedAnnotations;
@@ -185,8 +193,106 @@
   return @{@"annotations" : annotationsJSON};
 }
 
+- (BOOL)addReplyForAnnotationWithUUID:(NSString *)annotationUUID contents:(NSString *)contents
+  {
+  PSPDFDocument *document = self.pdfController.document;
+  VALIDATE_DOCUMENT(document, NO)
+  BOOL success = NO;
+
+  // Get the annotation you want to add the reply to
+  PSPDFAnnotation *annotation;
+  NSArray<PSPDFAnnotation *> *allAnnotations = [[document allAnnotationsOfType:PSPDFAnnotationTypeAll].allValues valueForKeyPath:@"@unionOfArrays.self"];
+  for (PSPDFAnnotation *annot in allAnnotations) {
+    if ([annot.uuid isEqualToString:annotationUUID]) {
+      annotation = annot;
+      break;
+    }
+  }
+
+  // Add the reply.
+  if (annotation) {
+    PSPDFNoteAnnotation *reply = [[PSPDFNoteAnnotation alloc] initWithContents:contents];
+    reply.color = annotation.color;
+    reply.inReplyToAnnotation = annotation;
+    reply.flags |= ~PSPDFAnnotationFlagReadOnly;
+    success = [document addAnnotations:@[reply] options:nil];
+  }
+
+  if (!success) {
+    NSLog(@"Failed to add reply.");
+  }
+
+  return success;
+}
+
+- (BOOL)addReplyWithUUID:(NSString *)annotationUUID contents:(id)contents {
+  NSData *data;
+  if ([contents isKindOfClass:NSString.class]) {
+    data = [contents dataUsingEncoding:NSUTF8StringEncoding];
+  } else if ([contents isKindOfClass:NSDictionary.class])  {
+    data = [NSJSONSerialization dataWithJSONObject:contents options:0 error:nil];
+  } else {
+    NSLog(@"Invalid JSON Annotation.");
+    return NO;
+  }
+  
+  id jsonReply = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  PSPDFDocument *document = self.pdfController.document;
+  VALIDATE_DOCUMENT(document, NO)
+  BOOL success = NO;
+  PSPDFDocumentProvider *documentProvider = document.documentProviders.firstObject;
+
+  // Get the annotation you want to add the reply to
+  PSPDFAnnotation *annotation;
+  NSArray<PSPDFAnnotation *> *allAnnotations = [[document allAnnotationsOfType:PSPDFAnnotationTypeAll].allValues valueForKeyPath:@"@unionOfArrays.self"];
+  for (PSPDFAnnotation *annot in allAnnotations) {
+    if ([annot.name isEqualToString:annotationUUID]) {
+      annotation = annot;
+      break;
+    }
+  }
+
+  // Add the reply.
+  if (annotation) {
+    PSPDFNoteAnnotation *reply = [[PSPDFNoteAnnotation alloc] initWithContents:jsonReply[@"text"]];
+    PSPDFAnnotation *tempReply = [PSPDFAnnotation annotationFromInstantJSON:data documentProvider:documentProvider error:NULL];
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+    NSDate *createdAt = [dateFormatter dateFromString:jsonReply[@"createdAt"]];
+    NSDate *lastModified = [dateFormatter dateFromString:jsonReply[@"updatedAt"]];
+    
+    // PSPDFAnnotationFlags lockedFlags = PSPDFAnnotationFlagLocked;
+    
+    // Avances readOnly (solo no deja editar)
+    NSArray *replyFlags = jsonReply[@"customFlags"];
+    // NSArray *replyFlags = jsonReply[@"flags"];
+    NSString *flagsString = [[replyFlags valueForKey:@"description"] componentsJoinedByString:@""];
+    if([flagsString containsString:@"readOnly"]){
+      // reply.editable = false;
+      reply.flags |= ~PSPDFAnnotationFlagReadOnly;
+    };
+    
+    reply.creationDate = createdAt;
+    reply.inReplyToAnnotation = annotation;
+    reply.iconName = jsonReply[@"icon"];
+    reply.pageIndex = annotation.absolutePageIndex;
+    reply.user = jsonReply[@"creatorName"];
+    reply.name = jsonReply[@"name"];
+    reply.lastModified = lastModified;
+    success = [document addAnnotations:@[reply] options:nil];
+  }
+
+  if (!success) {
+    NSLog(@"Failed to add reply.");
+  }
+
+  return success;
+}
+
 - (BOOL)addAnnotation:(id)jsonAnnotation {
   NSData *data;
+  printf("annotation2");
   if ([jsonAnnotation isKindOfClass:NSString.class]) {
     data = [jsonAnnotation dataUsingEncoding:NSUTF8StringEncoding];
   } else if ([jsonAnnotation isKindOfClass:NSDictionary.class])  {
@@ -203,7 +309,23 @@
   BOOL success = NO;
   if (data) {
     PSPDFAnnotation *annotation = [PSPDFAnnotation annotationFromInstantJSON:data documentProvider:documentProvider error:NULL];
+
+    id jsonReply = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    NSArray *replyFlags = jsonReply[@"customFlags"];
+    NSString *flagsString = [[replyFlags valueForKey:@"description"] componentsJoinedByString:@""];
+    if([flagsString containsString:@"readOnly"]){
+      annotation.flags = -64;
+      //annotation.hidden = false;
+    }
     success = [document addAnnotations:@[annotation] options:nil];
+    
+    NSArray<PSPDFAnnotation *> *allAnnotations2 = [[document allAnnotationsOfType:PSPDFAnnotationTypeAll].allValues valueForKeyPath:@"@unionOfArrays.self"];
+    for (PSPDFAnnotation *annot2 in allAnnotations2) {
+      if ([annot2.name isEqualToString:annotation.name]) {
+        NSLog(@"flags: %i", annotation.flags);
+        break;
+      }
+    }
   }
 
   if (!success) {
@@ -245,6 +367,7 @@
 
 - (BOOL)addAnnotations:(id)jsonAnnotations {
   NSData *data;
+  printf("annotation 1");
   if ([jsonAnnotations isKindOfClass:NSString.class]) {
     data = [jsonAnnotations dataUsingEncoding:NSUTF8StringEncoding];
   } else if ([jsonAnnotations isKindOfClass:NSDictionary.class])  {
@@ -296,7 +419,7 @@
 
   PSPDFDocument *document = self.pdfController.document;
   VALIDATE_DOCUMENT(document)
-  
+
   for (PSPDFFormElement *formElement in document.formParser.forms) {
     if ([formElement.fullyQualifiedFieldName isEqualToString:fullyQualifiedName]) {
       if ([formElement isKindOfClass:PSPDFButtonFormElement.class]) {
@@ -324,10 +447,15 @@
 - (void)annotationChangedNotification:(NSNotification *)notification {
   id object = notification.object;
   NSArray <PSPDFAnnotation *> *annotations;
+  NSArray <PSPDFNoteAnnotation *> *noteAnnotations;
   if ([object isKindOfClass:NSArray.class]) {
     annotations = object;
+    noteAnnotations = object;
   } else if ([object isKindOfClass:PSPDFAnnotation.class]) {
     annotations = @[object];
+    if([object isKindOfClass:PSPDFNoteAnnotation.class]) {
+      noteAnnotations = @[object];
+    }
   } else {
     if (self.onAnnotationsChanged) {
       self.onAnnotationsChanged(@{@"error" : @"Invalid annotation error."});
@@ -346,7 +474,31 @@
   }
 
   NSArray <NSDictionary *> *annotationsJSON = [RCTConvert instantJSONFromAnnotations:annotations];
-  if (self.onAnnotationsChanged) {
+  NSMutableArray<PSPDFAnnotation *> *inReplyToAnnotation = [NSMutableArray new];
+  PSPDFAnnotationAuthorStateModel *authorStateModel;
+  PSPDFAnnotationAuthorStateModel *authorState;
+  for (PSPDFAnnotation *annotation in annotations) {
+    if (annotation.inReplyToAnnotation) {
+      [inReplyToAnnotation addObject:annotation.inReplyToAnnotation];
+    }
+  }
+
+  for (PSPDFNoteAnnotation *noteAnnotation in noteAnnotations) {
+    // NSLog(@"authorState %lu",noteAnnotation.type);
+    // if([noteAnnotation.type isEqualToNumber:PSPDFAnnotationTypeNote]);
+    // if(noteAnnotation.authorStateModel) {
+    //   authorStateModel = noteAnnotation.authorStateModel;
+    // }
+    // if(noteAnnotation.authorState) {
+    //   authorState = noteAnnotation.authorState;
+    // }
+  }
+
+  if (self.onAnnotationsChanged && inReplyToAnnotation.count) {
+    self.onAnnotationsChanged(@{@"change" : change,
+      @"annotations" : annotationsJSON,
+      @"inReplyToAnnotations": [RCTConvert instantJSONFromAnnotations:inReplyToAnnotation]});
+  } else if (self.onAnnotationsChanged) {
     self.onAnnotationsChanged(@{@"change" : change, @"annotations" : annotationsJSON});
   }
 }
@@ -423,7 +575,7 @@
         break;
       }
     }
-    
+
     self.onStateChanged(@{@"documentLoaded" : @(isDocumentLoaded),
                           @"currentPageIndex" : @(pageIndex),
                           @"pageCount" : @(pageCount),
