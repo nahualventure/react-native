@@ -33,12 +33,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// Annotation Toolbar
 - (BOOL)enterAnnotationCreationMode;
 - (BOOL)exitCurrentlyActiveMode;
+- (void)disableReplies;
 
 /// Document
 - (BOOL)saveCurrentDocument;
 
 /// Anotations
 - (NSDictionary<NSString *, NSArray<NSDictionary *> *> *)getAnnotations:(PSPDFPageIndex)pageIndex type:(PSPDFAnnotationType)type;
+- (BOOL)addReplyWithUUID:(NSString *)annotationUUID contents:(id)contents;
+- (BOOL)addReplyForAnnotationWithUUID: (NSString *)annotationUUID contents:(NSString *)contents;
 - (BOOL)addAnnotation:(id)jsonAnnotation;
 - (BOOL)removeAnnotationWithUUID:(NSString *)annotationUUID;
 - (NSDictionary<NSString *, NSArray<NSDictionary *> *> *)getAllUnsavedAnnotations;

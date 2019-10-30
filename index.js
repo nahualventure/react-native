@@ -121,6 +121,19 @@ class PSPDFKitView extends React.Component {
   };
 
   /**
+   * Disable replies.
+   */
+  disableReplies = function() {
+    if (Platform.OS === "android") {
+      // to implement
+    } else if (Platform.OS === "ios") {
+      return NativeModules.PSPDFKitViewManager.disableReplies(
+        findNodeHandle(this.refs.pdfView)
+      );
+    }
+  };
+
+  /**
    * Saves the currently opened document.
    */
   saveCurrentDocument = function() {
@@ -167,6 +180,24 @@ class PSPDFKitView extends React.Component {
       return NativeModules.PSPDFKitViewManager.getAnnotations(
         pageIndex,
         type,
+        findNodeHandle(this.refs.pdfView)
+      );
+    }
+  };
+
+  /**
+   * Adds a new reply to a annotation.
+   *
+   * @param UUID
+   * @param annotation
+   */
+  addReplyWithUUID = function(UUID, annotation) {
+    if (Platform.OS === "android") {
+      //to implement
+    } else if (Platform.OS === "ios") {
+      return NativeModules.PSPDFKitViewManager.addReplyWithUUID(
+        UUID,
+        annotation,
         findNodeHandle(this.refs.pdfView)
       );
     }

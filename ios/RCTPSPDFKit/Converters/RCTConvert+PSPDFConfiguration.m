@@ -362,7 +362,7 @@ RCT_MULTI_ENUM_CONVERTER(PSPDFDocumentSharingPagesOptions,
     self.searchMode = [RCTConvert BOOL:dictionary[@"inlineSearch"]] ? PSPDFSearchModeInline : PSPDFSearchModeModal;
   }
 
-  if (dictionary[@"enableAnnotationEditing"] && [RCTConvert BOOL:dictionary[@"enableAnnotationEditing"]]) {
+  if (dictionary[@"enableAnnotationEditing"] && ![RCTConvert BOOL:dictionary[@"enableAnnotationEditing"]]) {
     self.editableAnnotationTypes = nil;
   }
 

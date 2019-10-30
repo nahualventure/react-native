@@ -124,6 +124,13 @@ RCT_EXPORT_METHOD(exitCurrentlyActiveMode:(nonnull NSNumber *)reactTag resolver:
   });
 }
 
+RCT_EXPORT_METHOD(disableReplies:(nonnull NSNumber *)reactTag) {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    RCTPSPDFKitView *component = (RCTPSPDFKitView *)[self.bridge.uiManager viewForReactTag:reactTag];
+    [component disableReplies];
+  });
+}
+
 RCT_EXPORT_METHOD(saveCurrentDocument:(nonnull NSNumber *)reactTag resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
   dispatch_async(dispatch_get_main_queue(), ^{
     RCTPSPDFKitView *component = (RCTPSPDFKitView *)[self.bridge.uiManager viewForReactTag:reactTag];
@@ -144,6 +151,18 @@ RCT_REMAP_METHOD(getAnnotations, getAnnotations:(nonnull NSNumber *)pageIndex ty
       resolve(annotations);
     } else {
       reject(@"error", @"Failed to get annotations.", nil);
+	  }
+  });
+}
+
+RCT_EXPORT_METHOD(addReplyWithUUID:(NSString *)annotationUUID contents:(id)contents reactTag:(nonnull NSNumber *)reactTag resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    RCTPSPDFKitView *component = (RCTPSPDFKitView *)[self.bridge.uiManager viewForReactTag:reactTag];
+    BOOL success = [component addReplyWithUUID:annotationUUID contents:contents];
+    if (success) {
+      resolve(@(success));
+    } else {
+      reject(@"error", @"Failed to add reply.", nil);
     }
   });
 }

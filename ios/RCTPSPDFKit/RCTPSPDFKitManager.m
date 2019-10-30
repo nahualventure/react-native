@@ -29,6 +29,8 @@ RCT_EXPORT_METHOD(setLicenseKey:(NSString *)licenseKey) {
 RCT_EXPORT_METHOD(present:(PSPDFDocument *)document withConfiguration:(PSPDFConfiguration *)configuration) {
   PSPDFViewController *pdfViewController = [[PSPDFViewController alloc] initWithDocument:document configuration:configuration];
 
+  [pdfViewController.navigationItem setRightBarButtonItems: @[pdfViewController.thumbnailsButtonItem, pdfViewController.outlineButtonItem, pdfViewController.searchButtonItem, pdfViewController.annotationButtonItem] animated: NO];
+
   UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:pdfViewController];
 
   UIViewController *presentingViewController = RCTPresentedViewController();
