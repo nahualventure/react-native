@@ -12,7 +12,6 @@
 #import "RCTConvert+PSPDFAnnotation.h"
 #import "RCTConvert+PSPDFViewMode.h"
 #import "RCTConvert+UIBarButtonItem.h"
-#import "MyFeaturesSource.m"
 
 #define VALIDATE_DOCUMENT(document, ...) { if (!document.isValid) { NSLog(@"Document is invalid."); return __VA_ARGS__; }}
 
@@ -118,12 +117,6 @@
 
 - (BOOL)exitCurrentlyActiveMode {
   return [self.pdfController.annotationToolbarController hideToolbarAnimated:YES];
-}
-
-- (void)disableReplies {
-  printf("the message");
-  PSPDFDocument *document = self.pdfController.document;
-//  [document.features addSources:@[[[MyFeaturesSource alloc] init]]];
 }
 
 - (BOOL)saveCurrentDocument {
