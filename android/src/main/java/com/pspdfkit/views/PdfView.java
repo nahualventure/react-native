@@ -464,6 +464,28 @@ public class PdfView extends FrameLayout {
         return EnumSet.noneOf(AnnotationType.class);
     }
 
+    public Disposable addReplyWithUUID(@NonNull String parentUUID, ReadableMap annotation) {
+        return fragmentGetter.take(1).map(PdfFragment::getDocument).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(pdfDocument -> {
+                    JSONObject json = new JSONObject(annotation.toHashMap());
+                    List<Annotation> documentReplies = pdfDocument.getAnnotationProvider().getAnnotations(json.getInt("pageIndex"));
+                    Annotation parentAnnotation = null;
+                    Annotation newAnnotation = null;
+                    for (int i = 0; i < documentReplies.size(); i++) {
+                        if (documentReplies.get(i).getName().equals(parentUUID)) {
+                            parentAnnotation = documentReplies.get(i);
+                            break;
+                        }
+                    }
+                    if (parentAnnotation != null) {
+                        newAnnotation = pdfDocument.getAnnotationProvider().createAnnotationFromInstantJson(json.toString());
+                        newAnnotation.setInReplyTo(parentAnnotation);
+                    }
+                });
+
+    }
+
     public Disposable addAnnotation(ReadableMap annotation) {
         return fragmentGetter.take(1).map(PdfFragment::getDocument).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

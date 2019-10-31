@@ -50,6 +50,7 @@ public class ReactPdfViewManager extends ViewGroupManager<PdfView> {
     public static final int COMMAND_GET_FORM_FIELD_VALUE = 8;
     public static final int COMMAND_SET_FORM_FIELD_VALUE = 9;
     public static final int COMMAND_REMOVE_ANNOTATION = 10;
+    public static final int COMMAND_ADD_REPLY_WITH_UUID = 11;
 
     private CompositeDisposable annotationDisposables = new CompositeDisposable();
 
@@ -99,6 +100,7 @@ public class ReactPdfViewManager extends ViewGroupManager<PdfView> {
         commandMap.put("getFormFieldValue", COMMAND_GET_FORM_FIELD_VALUE);
         commandMap.put("setFormFieldValue", COMMAND_SET_FORM_FIELD_VALUE);
         commandMap.put("removeAnnotation", COMMAND_REMOVE_ANNOTATION);
+        commandMap.put("addReplyWithUUID", COMMAND_ADD_REPLY_WITH_UUID);
         return commandMap;
     }
 
@@ -180,6 +182,11 @@ public class ReactPdfViewManager extends ViewGroupManager<PdfView> {
                                 }
                             });
                     annotationDisposables.add(annotationDisposable);
+                }
+                break;
+            case COMMAND_ADD_REPLY_WITH_UUID:
+                if(args != null) {
+                    annotationDisposables.add(root.addReplyWithUUID(args.getString(0), args.getMap(1)));
                 }
                 break;
             case COMMAND_ADD_ANNOTATION:

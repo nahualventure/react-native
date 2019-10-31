@@ -193,7 +193,11 @@ class PSPDFKitView extends React.Component {
    */
   addReplyWithUUID = function(UUID, annotation) {
     if (Platform.OS === "android") {
-      //to implement
+      UIManager.dispatchViewManagerCommand(
+        findNodeHandle(this.refs.pdfView),
+        UIManager.RCTPSPDFKitView.Commands.addReplyWithUUID,
+        [UUID, annotation]
+      );
     } else if (Platform.OS === "ios") {
       return NativeModules.PSPDFKitViewManager.addReplyWithUUID(
         UUID,
