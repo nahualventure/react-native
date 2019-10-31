@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.util.AttributeSet;
 import android.util.Pair;
+import android.util.Log;
 import android.view.Choreographer;
 import android.view.Gravity;
 import android.view.View;
@@ -478,7 +479,9 @@ public class PdfView extends FrameLayout {
                             break;
                         }
                     }
+                    Log.d("Proc2", String.format("this page index %d.", documentReplies.size()));
                     if (parentAnnotation != null) {
+                        Log.d("Proc2", String.format("this page index %s.", parentAnnotation.getName()));
                         newAnnotation = pdfDocument.getAnnotationProvider().createAnnotationFromInstantJson(json.toString());
                         newAnnotation.setInReplyTo(parentAnnotation);
                     }
