@@ -76,7 +76,7 @@ public class PdfViewAnnotationChangedEvent extends Event<PdfViewAnnotationChange
                 parentMap = JsonUtilities.jsonObjectToMap(parentJson);
                 parentMap.put("uuid", parentAnnotation.getName());
                 onReplyAnnotations.add(parentMap);
-                map.put("onReplyAnnotations", onReplyAnnotations);
+                map.put("inReplyToAnnotations", onReplyAnnotations);
             }
 
             WritableMap eventData = Arguments.makeNativeMap(map);
