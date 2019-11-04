@@ -17,6 +17,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.uimanager.events.EventDispatcher;
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationType;
+import com.pspdfkit.annotations.AnnotationFlags;
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration;
 import com.pspdfkit.configuration.activity.ThumbnailBarMode;
 import com.pspdfkit.document.PdfDocument;
@@ -494,7 +495,13 @@ public class PdfView extends FrameLayout {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(pdfDocument -> {
                     JSONObject json = new JSONObject(annotation.toHashMap());
-                    pdfDocument.getAnnotationProvider().createAnnotationFromInstantJson(json.toString());
+                    Annotation createdAnnotation = pdfDocument.getAnnotationProvider().createAnnotationFromInstantJson(json.toString());
+                    JSONArray customFlags = json.getJSONArray("customFlags");
+                    if (customFlags.length() > 0 && customFlags.toString().contains("\"readOnly\"")) {
+                        EnumSet<AnnotationFlags> justFlags  = createdAnnotation.getFlags();
+                        justFlags.add(AnnotationFlags.READONLY);
+                        createdAnnotation.setFlags(justFlags);
+                    }
                 });
 
     }
