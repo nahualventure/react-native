@@ -46,6 +46,11 @@ public class PdfViewAnnotationChangedEvent extends Event<PdfViewAnnotationChange
     }
 
     @Override
+    public boolean canCoalesce() {
+        return false;
+    }
+
+    @Override
     public void dispatch(RCTEventEmitter rctEventEmitter) {
         try {
             Map<String, Object> map = new HashMap<>();
