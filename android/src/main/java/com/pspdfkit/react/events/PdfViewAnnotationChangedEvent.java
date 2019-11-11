@@ -77,9 +77,19 @@ public class PdfViewAnnotationChangedEvent extends Event<PdfViewAnnotationChange
             map.put("annotations", annotations);
             parentAnnotation = annotation.getInReplyTo();
             if (parentAnnotation != null) {
-                JSONObject parentJson = new JSONObject(parentAnnotation.toInstantJson());
-                parentMap = JsonUtilities.jsonObjectToMap(parentJson);
-                parentMap.put("uuid", parentAnnotation.getName());
+
+                if (EVENT_TYPE_REMOVED.equalsIgnoreCase(eventType)) {
+                // For removed annotation we can't get the instant json so manually create something.
+                    parentMap = new HashMap<>();
+                    parentMap.put("name", parentAnnotation.getName());
+                    parentMap.put("uuid", parentAnnotation.getName());
+                    parentMap.put("creatorName", parentAnnotation.getCreator());
+                } else {
+                    JSONObject parentJson = new JSONObject(parentAnnotation.toInstantJson());
+                    parentMap = JsonUtilities.jsonObjectToMap(parentJson);
+                    parentMap.put("uuid", parentAnnotation.getName());
+                }
+
                 onReplyAnnotations.add(parentMap);
                 map.put("inReplyToAnnotations", onReplyAnnotations);
             }
