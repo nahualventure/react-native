@@ -471,6 +471,7 @@ public class PdfView extends FrameLayout {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(pdfDocument -> {
                     JSONObject json = new JSONObject(annotation.toHashMap());
+                    JSONArray customFlags = json.getJSONArray("customFlags");
                     List<Annotation> documentReplies = pdfDocument.getAnnotationProvider().getAnnotations(json.getInt("pageIndex"));
                     Annotation parentAnnotation = null;
                     Annotation newAnnotation = null;
@@ -480,10 +481,22 @@ public class PdfView extends FrameLayout {
                             break;
                         }
                     }
-                    Log.d("Proc2", String.format("this page index %d.", documentReplies.size()));
                     if (parentAnnotation != null) {
-                        Log.d("Proc2", String.format("this page index %s.", parentAnnotation.getName()));
                         newAnnotation = pdfDocument.getAnnotationProvider().createAnnotationFromInstantJson(json.toString());
+                        if (customFlags.length() > 0 && customFlags.toString().contains("\"readOnly\"")) {
+                            EnumSet<AnnotationFlags> justFlags  = newAnnotation.getFlags();
+                            justFlags.add(AnnotationFlags.LOCKED);
+                            justFlags.add(AnnotationFlags.LOCKEDCONTENTS);
+                            newAnnotation.setFlags(justFlags);
+
+                            List<Annotation> tempReplies = pdfDocument.getAnnotationProvider().getAnnotations(json.getInt("pageIndex"));
+                            for (int i = 0; i < tempReplies.size(); i++) {
+                                if (tempReplies.get(i).getName().equals(newAnnotation.getName())) {
+                                    Log.d("Proc2", tempReplies.get(i).getFlags().toString());
+                                    break;
+                                }
+                            }
+                        }
                         newAnnotation.setInReplyTo(parentAnnotation);
                     }
                 });
@@ -499,7 +512,7 @@ public class PdfView extends FrameLayout {
                     JSONArray customFlags = json.getJSONArray("customFlags");
                     if (customFlags.length() > 0 && customFlags.toString().contains("\"readOnly\"")) {
                         EnumSet<AnnotationFlags> justFlags  = createdAnnotation.getFlags();
-                        justFlags.add(AnnotationFlags.READONLY);
+                        justFlags.add(AnnotationFlags.LOCKED);
                         createdAnnotation.setFlags(justFlags);
                     }
                 });
