@@ -550,7 +550,14 @@ PSPDFKitView.propTypes = {
    *
    * @platform ios
    */
-  rightBarButtonItems: PropTypes.array
+  rightBarButtonItems: PropTypes.array,
+  /**
+   * toolbarTitle: Can be used to specify a custom toolbar title on iOS by setting the 'title' property of the PSPDFViewController
+   * Set showDocumentLabel, useParentNavigationBar and allowToolbarTitleChange to false in configuration
+   *
+   * @platform ios
+   */
+  toolbarTitle: PropTypes.string
 };
 
 if (Platform.OS === "ios" || Platform.OS === "android") {
