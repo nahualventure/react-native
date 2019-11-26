@@ -45,6 +45,8 @@ import com.pspdfkit.ui.thumbnail.PdfThumbnailBarController;
 import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout;
 import com.pspdfkit.ui.toolbar.grouping.MenuItemGroupingRule;
 import com.pspdfkit.ui.toolbar.popup.PdfTextSelectionPopupToolbar;
+import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout.OnContextualToolbarLifecycleListener;
+import com.pspdfkit.ui.toolbar.ContextualToolbar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -125,6 +127,21 @@ public class PdfView extends FrameLayout {
         addView(container, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
         ToolbarCoordinatorLayout toolbarCoordinatorLayout = new ToolbarCoordinatorLayout(getContext());
+
+        toolbarCoordinatorLayout.setOnContextualToolbarLifecycleListener(new OnContextualToolbarLifecycleListener() {
+            @Override public void onPrepareContextualToolbar(@NonNull ContextualToolbar toolbar) {
+                toolbar.setPosition(ToolbarCoordinatorLayout.LayoutParams.Position.RIGHT);
+            }
+
+            @Override public void onRemoveContextualToolbar(ContextualToolbar toolbar) {
+                // pass
+            }
+
+            @Override public void onDisplayContextualToolbar(ContextualToolbar toolbar) {
+                // pass
+            }
+        });
+
         container.addView(toolbarCoordinatorLayout, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
         PropertyInspectorCoordinatorLayout inspectorCoordinatorLayout = new PropertyInspectorCoordinatorLayout(getContext());
